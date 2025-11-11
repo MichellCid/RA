@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Monito Bailando 3D con AR</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+      }
+      #instructions {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 1000;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="instructions">
+      <p>Apunta la cámara a un marcador AR para ver al monito bailando</p>
+      <button id="musicToggle">Activar Música</button>
+    </div>
+
+    <a-scene
+      embedded
+      arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+    >
+      <!-- Marcador Hiro -->
+      <a-marker preset="hiro">
+        <!-- Monito bailando 3D -->
+        <a-entity id="dancing-monkey" position="0 0 0">
+          <!-- Cabeza -->
+          <a-sphere 
+            position="0 2.5 0" 
+            radius="0.5" 
+            color="#8B4513"
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 2000">
+          </a-sphere>
+          
+          <!-- Ojos -->
+          <a-sphere position="-0.15 2.6 0.4" radius="0.05" color="white"></a-sphere>
+          <a-sphere position="0.15 2.6 0.4" radius="0.05" color="white"></a-sphere>
+          <a-sphere position="-0.15 2.6 0.45" radius="0.02" color="black"></a-sphere>
+          <a-sphere position="0.15 2.6 0.45" radius="0.02" color="black"></a-sphere>
+          
+          <!-- Boca -->
+          <a-cylinder position="0 2.4 0.4" radius="0.1" height="0.05" color="black"></a-cylinder>
+          
+          <!-- Cuerpo -->
+          <a-cylinder 
+            position="0 1.5 0" 
+            radius="0.4" 
+            height="1" 
+            color="#A0522D"
+            animation="property: rotation; to: 10 0 -10; loop: true; dir: alternate; dur: 500">
+          </a-cylinder>
+          
+          <!-- Brazos -->
+          <a-cylinder 
+            position="-0.7 2 0" 
+            radius="0.08" 
+            height="0.8" 
+            rotation="0 0 45"
+            color="#8B4513"
+            animation="property: rotation; to: 0 0 120; loop: true; dir: alternate; dur: 400">
+          </a-cylinder>
+          
+          <a-cylinder 
+            position="0.7 2 0" 
+            radius="0.08" 
+            height="0.8" 
+            rotation="0 0 -45"
+            color="#8B4513"
+            animation="property: rotation; to: 0 0 -120; loop: true; dir: alternate; dur: 400">
+          </a-cylinder>
+          
+          <!-- Piernas -->
+          <a-cylinder 
+            position="-0.25 0.5 0" 
+            radius="0.1" 
+            height="1" 
+            color="#8B4513"
+            animation="property: rotation; to: 45 0 0; loop: true; dir: alternate; dur: 300">
+          </a-cylinder>
+          
+          <a-cylinder 
+            position="0.25 0.5 0" 
+            radius="0.1" 
+            height="1" 
+            color="#8B4513"
+            animation="property: rotation; to: -45 0 0; loop: true; dir: alternate; dur: 300">
+          </a-cylinder>
+          
+          <!-- Cola -->
+          <a-torus 
+            position="0 1 0.5" 
+            arc="180" 
+            radius="0.3" 
+            radius-tubular="0.03" 
+            color="#8B4513"
+            rotation="90 0 0"
+            animation="property: rotation; to: 90 180 0; loop: true; dur: 800">
+          </a-torus>
+          
+          <!-- Sombrero de fiesta -->
+          <a-cone 
+            position="0 3.1 0" 
+            radius-bottom="0.4" 
+            radius-top="0.1" 
+            height="0.3" 
+            color="red"
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 1500">
+          </a-cone>
+        </a-entity>
+      </a-marker>
+
+      <!-- Cámara -->
+      <a-entity camera></a-entity>
+    </a-scene>
+    
+    <!-- Audio para la música -->
+    <audio id="music" loop>
+      <source src="https://assets.codepen.io/1468070/happy-music.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const musicToggle = document.getElementById('musicToggle');
+        const music = document.getElementById('music');
+        
+        musicToggle.addEventListener('click', function() {
+          if (music.paused) {
+            music.play();
+            musicToggle.textContent = 'Desactivar Música';
+          } else {
+            music.pause();
+            musicToggle.textContent = 'Activar Música';
+          }
+        });
+        
+        // Añadir efectos de partículas para más diversión
+        const scene = document.querySelector('a-scene');
+        const marker = document.querySelector('a-marker');
+        
+        marker.addEventListener('markerFound', function() {
+          // Crear partículas de confeti cuando se detecta el marcador
+          for (let i = 0; i < 20; i++) {
+            const confetti = document.createElement('a-sphere');
+            confetti.setAttribute('position', `${Math.random() * 2 - 1} ${Math.random() * 2 + 1} ${Math.random() * 2 - 1}`);
+            confetti.setAttribute('radius', '0.05');
+            confetti.setAttribute('color', `hsl(${Math.random() * 360}, 100%, 50%)`);
+            confetti.setAttribute('animation', `property: position; to: ${Math.random() * 4 - 2} -2 ${Math.random() * 4 - 2}; dur: 2000`);
+            confetti.setAttribute('animation__scale', 'property: scale; to: 0 0 0; dur: 2000');
+            
+            marker.appendChild(confetti);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
