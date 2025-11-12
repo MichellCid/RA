@@ -22,12 +22,18 @@
         z-index: 1000;
         font-size: 14px;
       }
+      #status {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #ffcc00;
+      }
     </style>
   </head>
   <body>
     <div id="instructions">
       <p>Apunta la cámara a un marcador AR para ver al monito bailando</p>
       <button id="musicToggle">Activar Música</button>
+      <div id="status">Haz clic en cualquier parte primero</div>
     </div>
 
     <a-scene
@@ -100,17 +106,6 @@
             animation="property: rotation; to: -45 0 0; loop: true; dir: alternate; dur: 300">
           </a-cylinder>
           
-          <!-- Cola 
-          <a-torus 
-            position="0 1 0.5" 
-            arc="180" 
-            radius="0.3" 
-            radius-tubular="0.03" 
-            color="#8B4513"
-            rotation="90 0 0"
-            animation="property: rotation; to: 90 180 0; loop: true; dur: 800">
-          </a-torus>
-          -->
           <!-- Sombrero de fiesta -->
           <a-cone 
             position="0 3.1 0" 
@@ -128,41 +123,97 @@
     </a-scene>
     
     <!-- Audio para la música -->
-    <audio id="music" loop>
-      <source src="https://www.soundjay.com/music/sounds-346.mp3" type="audio/mpeg">
+    <audio id="music" loop preload="auto">
+      <source src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3" type="audio/mpeg">
     </audio>
 
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         const musicToggle = document.getElementById('musicToggle');
         const music = document.getElementById('music');
+        const status = document.getElementById('status');
+        let musicEnabled = false;
+        
+        // Habilitar música después de la interacción del usuario
+        function enableMusic() {
+          musicEnabled = true;
+          status.textContent = 'Música lista. Haz clic en "Activar Música"';
+          musicToggle.disabled = false;
+          
+          // Precargar la música
+          music.load();
+        }
+        
+        // Los navegadores requieren interacción del usuario primero
+        document.addEventListener('click', enableMusic, { once: true });
+        document.addEventListener('touchstart', enableMusic, { once: true });
         
         musicToggle.addEventListener('click', function() {
+          if (!musicEnabled) {
+            status.textContent = 'Haz clic primero en cualquier parte de la pantalla';
+            return;
+          }
+          
           if (music.paused) {
-            music.play();
-            musicToggle.textContent = 'Desactivar Música';
+            // Intentar reproducir la música
+            const playPromise = music.play();
+            
+            if (playPromise !== undefined) {
+              playPromise.then(function() {
+                // Éxito: la música se está reproduciendo
+                musicToggle.textContent = 'Desactivar Música';
+                status.textContent = 'Música reproduciéndose 🎵';
+              }).catch(function(error) {
+                // Error: no se pudo reproducir
+                console.error('Error:', error);
+                status.textContent = 'Error al reproducir. Verifica el volumen.';
+              });
+            }
           } else {
+            // Pausar la música
             music.pause();
+            music.currentTime = 0; // Reiniciar al principio
             musicToggle.textContent = 'Activar Música';
+            status.textContent = 'Música pausada';
           }
         });
         
-        // Añadir efectos de partículas para más diversión
-        const scene = document.querySelector('a-scene');
+        // Efectos de partículas
         const marker = document.querySelector('a-marker');
         
         marker.addEventListener('markerFound', function() {
-          // Crear partículas de confeti cuando se detecta el marcador
+          // Crear partículas de confeti
           for (let i = 0; i < 20; i++) {
             const confetti = document.createElement('a-sphere');
-            confetti.setAttribute('position', `${Math.random() * 2 - 1} ${Math.random() * 2 + 1} ${Math.random() * 2 - 1}`);
+            confetti.setAttribute('position', 
+              `${Math.random() * 2 - 1} ${Math.random() * 2 + 1} ${Math.random() * 2 - 1}`);
             confetti.setAttribute('radius', '0.05');
             confetti.setAttribute('color', `hsl(${Math.random() * 360}, 100%, 50%)`);
-            confetti.setAttribute('animation', `property: position; to: ${Math.random() * 4 - 2} -2 ${Math.random() * 4 - 2}; dur: 2000`);
-            confetti.setAttribute('animation__scale', 'property: scale; to: 0 0 0; dur: 2000');
+            confetti.setAttribute('animation', 
+              `property: position; to: ${Math.random() * 4 - 2} -2 ${Math.random() * 4 - 2}; dur: 2000`);
+            confetti.setAttribute('animation__scale', 
+              'property: scale; to: 0 0 0; dur: 2000');
             
             marker.appendChild(confetti);
           }
+          
+          // Reproducir música automáticamente si está habilitada
+          if (musicEnabled && music.paused) {
+            music.play().catch(function(error) {
+              console.log('Reproducción automática bloqueada');
+            });
+          }
+        });
+        
+        // Limpiar confeti cuando se pierde el marcador
+        marker.addEventListener('markerLost', function() {
+          const confettiElements = marker.querySelectorAll('a-sphere');
+          confettiElements.forEach(function(confetti) {
+            // Eliminar solo las partículas de confeti, no los elementos del monito
+            if (!confetti.parentElement.querySelector('#dancing-monkey')) {
+              marker.removeChild(confetti);
+            }
+          });
         });
       });
     </script>
